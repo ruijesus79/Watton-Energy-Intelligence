@@ -147,15 +147,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ simulation, data, onGenera
   const costStructureData = [
     {
       name: 'Cliente Atual',
-      Energia: (simulation.currentAnnual * 0.6), 
-      Redes: (simulation.currentAnnual * 0.4),
-      total: simulation.currentAnnual
+      Energia: (simulation.currentAnnualCost * 0.6), 
+      Redes: (simulation.currentAnnualCost * 0.4),
+      total: simulation.currentAnnualCost
     },
     {
       name: 'Watton Otimizado',
-      Energia: (simulation.wattonAnnual * 0.5), 
-      Redes: (simulation.wattonAnnual * 0.4), 
-      total: simulation.wattonAnnual
+      Energia: (simulation.wattonProposedCost * 0.5), 
+      Redes: (simulation.wattonProposedCost * 0.4), 
+      total: simulation.wattonProposedCost
     }
   ];
 
@@ -220,7 +220,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ simulation, data, onGenera
              <div className="glass-panel p-6 rounded-2xl border-l-4 border-l-slate-500 relative overflow-hidden">
                <div className="relative z-10">
                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Custo Anual Atual</p>
-                 <p className="text-3xl font-bold text-white mt-2">{formatCurrency(simulation.currentAnnual)}</p>
+                 <p className="text-3xl font-bold text-white mt-2">{formatCurrency(simulation.currentAnnualCost)}</p>
                  <p className="text-xs text-slate-500 mt-1">Baseado na fatura carregada</p>
                </div>
              </div>
@@ -240,7 +240,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ simulation, data, onGenera
                <div className="flex-1 p-5 flex flex-col justify-center">
                   <p className="text-watton-lime text-[10px] font-bold uppercase tracking-wider mb-1">Poupança Anual</p>
                   <div className="flex items-baseline gap-2">
-                     <p className="text-2xl font-bold text-white tracking-tight">{formatCurrency(simulation.savingsAnnual)}</p>
+                     <p className="text-2xl font-bold text-white tracking-tight">{formatCurrency(simulation.savingsTotal)}</p>
                   </div>
                   <div className="mt-1">
                      <span className="text-[10px] font-bold text-black bg-watton-lime px-1.5 py-0.5 rounded">-{simulation.savingsPercent.toFixed(1)}%</span>

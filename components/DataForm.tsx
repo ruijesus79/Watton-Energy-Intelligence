@@ -26,8 +26,12 @@ export const DataForm: React.FC<DataFormProps> = ({ initialData, onCalculate }) 
     // Potencia estimate (approx 30 days)
     const p_potencia = (parseFloat(formData.preco_potencia_dia) || 0) * 30;
     
+    // Taxas Extraídas (Se existirem)
+    const taxas = (parseFloat(formData.custosRegulados?.taxaExploracao) || 0) + 
+                  (parseFloat(formData.custosRegulados?.ciegValor) || 0);
+
     // Sum + IVA (approx 23%)
-    const subtotal = p_ponta + p_cheia + p_vazio + p_svazio + p_potencia;
+    const subtotal = p_ponta + p_cheia + p_vazio + p_svazio + p_potencia + taxas;
     // We display subtotal mostly, but we can approx total
     setCalculatedTotal(subtotal * 1.23); 
   }, [formData]);
@@ -35,9 +39,19 @@ export const DataForm: React.FC<DataFormProps> = ({ initialData, onCalculate }) 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    // CORREÇÃO CRÍTICA DE UX:
-    // Se for number, guardamos a string bruta no state para permitir digitar "0." ou apagar tudo.
-    // A conversão para number acontece apenas no cálculo (useEffect) ou no submit.
+    // Nested update for regulated costs
+    if (name.startsWith('taxa_')) {
+        const field = name.replace('taxa_', '');
+        setFormData((prev: any) => ({
+            ...prev,
+            custosRegulados: {
+                ...prev.custosRegulados,
+                [field]: value
+            }
+        }));
+        return;
+    }
+
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
@@ -63,6 +77,14 @@ export const DataForm: React.FC<DataFormProps> = ({ initialData, onCalculate }) 
             cleanData[field] = 0;
         }
     });
+    
+    // Garantir estrutura de custos regulados
+    if (!cleanData.custosRegulados) {
+        cleanData.custosRegulados = { tarifaAcessoRedes: 0, ciegValor: 0, taxaExploracao: 0 };
+    } else {
+        cleanData.custosRegulados.taxaExploracao = parseFloat(String(cleanData.custosRegulados.taxaExploracao || 0));
+        cleanData.custosRegulados.ciegValor = parseFloat(String(cleanData.custosRegulados.ciegValor || 0));
+    }
 
     onCalculate(cleanData as InvoiceData);
   };
@@ -223,8 +245,9 @@ export const DataForm: React.FC<DataFormProps> = ({ initialData, onCalculate }) 
         </div>
 
         {/* RIGHT COLUMN - Matrix */}
-        <div className="lg:col-span-8">
-           <div className="glass-panel p-8 rounded-2xl h-full border-t-4 border-t-white">
+        <div className="lg:col-span-8 space-y-6">
+           {/* Energy Matrix */}
+           <div className="glass-panel p-8 rounded-2xl border-t-4 border-t-white">
               <SectionTitle 
                 title="Matriz de Consumo & Custos" 
                 icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
@@ -298,13 +321,42 @@ export const DataForm: React.FC<DataFormProps> = ({ initialData, onCalculate }) 
                   </tbody>
                 </table>
               </div>
+           </div>
 
-              {/* Mobile CTA */}
-              <div className="mt-8 md:hidden">
-                <button type="submit" className="w-full bg-watton-lime text-watton-black font-bold py-4 rounded-xl shadow-lg uppercase tracking-wide">
-                   Simular Agora
-                </button>
-              </div>
+           {/* Taxes & Regulated Costs (NEW SECTION) */}
+           <div className="glass-panel p-8 rounded-2xl border-t-4 border-t-blue-500">
+               <SectionTitle 
+                 title="Taxas e Custos Regulados (Extraídos)" 
+                 icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>}
+               />
+               <div className="grid grid-cols-2 gap-4">
+                  <StandardInput 
+                    label="Taxa DGEG / Exploração" 
+                    name="taxa_taxaExploracao" 
+                    type="number" 
+                    value={formData.custosRegulados?.taxaExploracao || 0} 
+                    suffix="€" 
+                    step="0.01"
+                  />
+                  <StandardInput 
+                    label="CIEG / IEC / Outros" 
+                    name="taxa_ciegValor" 
+                    type="number" 
+                    value={formData.custosRegulados?.ciegValor || 0} 
+                    suffix="€" 
+                    step="0.01"
+                  />
+               </div>
+               <p className="text-[10px] text-slate-500 mt-2 italic">
+                 *Estes valores são somados ao subtotal para o cálculo da fatura estimada, mas não afetam a simulação de poupança (pass-through).
+               </p>
+           </div>
+           
+           {/* Mobile CTA */}
+           <div className="mt-8 md:hidden">
+             <button type="submit" className="w-full bg-watton-lime text-watton-black font-bold py-4 rounded-xl shadow-lg uppercase tracking-wide">
+                Simular Agora
+             </button>
            </div>
         </div>
       </div>
