@@ -142,15 +142,61 @@ export interface PrescriptiveAnalysisResult {
   }
 }
 
-export interface SimulationResult {
-  currentAnnualCost: number;
+// ═══════════════════════════════════════════════════════════════════
+// NEW CORE ENGINES TYPES (PRODUCTION GRADE)
+// ═══════════════════════════════════════════════════════════════════
+
+export interface WattonPriceConfig {
+  ponta: number;
+  cheia: number;
+  vazio: number;
+  superVazio: number;
+  powerDaily: number;
+}
+
+export interface CalculationResult {
+  // Valores mensais
+  currentMonthly: number;
+  wattonMonthly: number;
+  savingsMonthly: number;
+
+  // Valores anuais (CANÓNICOS)
+  currentAnnual: number;
+  wattonAnnual: number;
+  savingsAnnual: number;
+  savingsPercent: number;
+
+  // Detalhe (para auditoria)
+  breakdown: {
+    energyCurrent: {
+      ponta: number;
+      cheias: number;
+      vazio: number;
+      superVazio: number;
+      total: number;
+    };
+    energyWatton: {
+      ponta: number;
+      cheias: number;
+      vazio: number;
+      superVazio: number;
+      total: number;
+    };
+    powerCurrent: number;
+    powerWatton: number;
+    billingDays: number;
+    annualizationFactor: number;
+  };
+}
+
+export interface SimulationResult extends CalculationResult {
+  // Legacy/UI Compatibility Fields
+  currentAnnualCost: number; // Alias to currentAnnual
   wattonBaseCost: number; 
-  wattonProposedCost: number; 
+  wattonProposedCost: number; // Alias to wattonAnnual
   wattonMarginTotal: number;
   wattonMarginPercent: number;
-  savingsTotal: number;
-  savingsMonthly: number;
-  savingsPercent: number;
+  savingsTotal: number; // Alias to savingsAnnual
   
   base_ponta: number;
   base_cheia: number;
@@ -178,7 +224,7 @@ export interface SimulationResult {
   risk: RiskAnalysis;
   
   aiInsights?: StrategicAnalysis;
-  prescriptiveAnalysis?: PrescriptiveAnalysisResult; // New Field
+  prescriptiveAnalysis?: PrescriptiveAnalysisResult;
   autoSwitch?: AutoSwitchConfig;
   
   validationMessages: string[];

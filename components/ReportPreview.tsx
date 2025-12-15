@@ -301,7 +301,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ data, simulation, 
                 {/* Box 1 */}
                 <div className="border border-gray-200 p-4 flex flex-col items-center justify-center min-h-[100px]">
                     <p className="text-[9px] uppercase font-bold text-gray-400 mb-2">Fatura Atual (Mensal)</p>
-                    <p className="text-2xl font-bold text-gray-800 tracking-tight">{(simulation.currentAnnualCost / 12).toFixed(2)} €</p>
+                    <p className="text-2xl font-bold text-gray-800 tracking-tight">{(simulation.currentMonthly).toFixed(2)} €</p>
                 </div>
                 {/* Box 2 */}
                 <div className="border border-[#8BC53F] bg-[#fcfef9] print:bg-[#fcfef9] p-4 flex flex-col items-center justify-center min-h-[100px]">
@@ -311,7 +311,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ data, simulation, 
                 {/* Box 3 */}
                 <div className="bg-[#8BC53F] p-4 flex flex-col items-center justify-center text-black print:bg-[#8BC53F] min-h-[100px]">
                     <p className="text-[9px] uppercase font-bold text-black/60 mb-2">Poupança Anual Est.</p>
-                    <p className="text-3xl font-bold text-black tracking-tight">+{simulation.savingsTotal.toFixed(2)} €</p>
+                    <p className="text-3xl font-bold text-black tracking-tight">+{simulation.savingsAnnual.toFixed(2)} €</p>
                 </div>
                 {/* Box 4 */}
                 <div className="bg-[#2E5A27] p-4 flex flex-col items-center justify-center text-white relative overflow-hidden print:bg-[#2E5A27] min-h-[100px]">
@@ -319,7 +319,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ data, simulation, 
                         -{Math.abs(simulation.savingsPercent).toFixed(1)}%
                     </div>
                     <p className="text-[9px] uppercase font-bold text-white/60 mb-2">Nova Fatura (Mensal)</p>
-                    <p className="text-2xl font-bold text-white tracking-tight">{(simulation.wattonProposedCost / 12).toFixed(2)} €</p>
+                    <p className="text-2xl font-bold text-white tracking-tight">{(simulation.wattonMonthly).toFixed(2)} €</p>
                 </div>
             </div>
 
@@ -493,7 +493,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ data, simulation, 
              <div className="bg-gray-100 p-8 border-l-8 border-[#2E5A27] mt-auto">
                  <h3 className="text-xs font-bold uppercase text-black mb-4">Insight Executivo</h3>
                  <p className="text-base font-serif italic text-gray-800 leading-relaxed font-medium">
-                    "Ao não agir, a <span className="font-bold uppercase">{data.nome_cliente}</span> desperdiça <span className="text-[#2E5A27] font-bold">{formatCurrency(simulation.savingsTotal)}</span> anuais em custos de ineficiência contratual e operacional. A Watton não é apenas um fornecedor; somos o seu guardião financeiro no mercado energético, defendendo os seus interesses e não os das grandes elétricas."
+                    "Ao não agir, a <span className="font-bold uppercase">{data.nome_cliente}</span> desperdiça <span className="text-[#2E5A27] font-bold">{formatCurrency(simulation.savingsAnnual)}</span> anuais em custos de ineficiência contratual e operacional. A Watton não é apenas um fornecedor; somos o seu guardião financeiro no mercado energético, defendendo os seus interesses e não os das grandes elétricas."
                  </p>
                  
                  <div className="grid grid-cols-3 gap-12 mt-8 pt-8 border-t border-gray-200">
@@ -503,7 +503,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ data, simulation, 
                     </div>
                     <div>
                         <p className="text-[9px] uppercase font-bold text-gray-500 mb-1">Recuperação Anual</p>
-                        <p className="text-2xl font-bold text-[#2E5A27] tracking-tight">{formatCurrency(simulation.savingsTotal)}</p>
+                        <p className="text-2xl font-bold text-[#2E5A27] tracking-tight">{formatCurrency(simulation.savingsAnnual)}</p>
                     </div>
                     <div className="text-right">
                         <p className="text-[9px] uppercase font-bold text-gray-500 mb-2">Classificação</p>

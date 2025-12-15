@@ -1,6 +1,5 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { z } from "zod";
 import { InvoiceData, StrategicAnalysis } from "../types";
 
 const getAiClient = () => {
@@ -102,20 +101,13 @@ function generateFallbackInsight(invoice: InvoiceData, simulation: any): Strateg
   ];
   const dominant = consumptions.sort((a,b) => b.val - a.val)[0];
 
-  const costDiffPonta = (invoice.preco_ponta - simulation.proposed_ponta);
-  const costDiffPotencia = (invoice.preco_potencia_dia - simulation.proposed_potencia_dia);
-  
-  let mainDriverText = "otimização transversal";
-  if (costDiffPonta > 0.02) mainDriverText = "redução agressiva do preço em Ponta";
-  else if (costDiffPotencia > 0.10) mainDriverText = "correção do valor de potência";
-
   return {
-    executive_summary: `Auditoria Watton (Modo Analítico): Identificada oportunidade de ${savingsFormatted} (${percentFormatted}%) através da ${mainDriverText}. O perfil de consumo revela elevada exposição em ${dominant.id}, mitigada pela nossa nova estrutura tarifária.`,
+    executive_summary: `Auditoria Watton (Modo Analítico): Identificada oportunidade de ${savingsFormatted} (${percentFormatted}%) através da otimização de tarifário. O perfil de consumo revela elevada exposição em ${dominant.id}, mitigada pela nossa nova estrutura de preços.`,
     hedging_strategy: simulation.vulnerabilityScore > 7 
         ? "Estratégia Defensiva: Recomendamos fixar preço a 12 meses (Fixed Price Swap) para blindar o orçamento contra a volatilidade do mercado Spot." 
         : "Estratégia Híbrida: Manter indexação no Vazio para capturar baixas de mercado, com teto máximo (Cap) nas horas de Ponta.",
     tactical_measures: [
-      { action: "Otimização de Potência (kVA)", impact: "Ajustar a potência contratada à carga real máxima registada (Maxímetro).", difficulty: "Baixa", estimated_savings_pct: 2.5 },
+      { action: "Otimização de Potência (kVA)", impact: "Ajustar a potência contratada à carga real máxima registada.", difficulty: "Baixa", estimated_savings_pct: 2.5 },
       { action: `Desvio de Carga (${dominant.id} → Vazio)`, impact: `Transferir processos intensivos de ${dominant.id} para horas de Vazio.`, difficulty: "Média", estimated_savings_pct: 4.8 },
       { action: "Revisão Fiscal (ISP)", impact: "Auditoria à taxa de Imposto sobre Produtos Petrolíferos.", difficulty: "Alta", estimated_savings_pct: 1.2 }
     ]
@@ -126,25 +118,20 @@ export async function processInvoiceDocument(base64Data: string, mimeType: strin
   try {
     const ai = getAiClient();
     const prompt = `
-      És um Auditor de Faturas Energéticas (IQ 300).
-      Extrai os dados desta imagem com EXTREMA PRECISÃO.
+      És um Auditor Financeiro de Energia (IQ 300).
+      A tua missão é extrair dados de faturas elétricas com 100% de precisão para auditoria.
 
-      1. DATAS (CRÍTICO): YYYY-MM-DD.
-      2. PREÇOS UNITÁRIOS: Extrai com até 6 casas decimais.
-      
-      3. EXTRAÇÃO GRANULAR (FASE 2):
-         - "contractType": Procura a descrição da tarifa (ex: 'BTN Ciclo Semanal').
-         - "leituraTipo": É 'Real' ou 'Estimada'? Se não explícito, null.
-         - "servicosAdicionais": Lista serviços extra (ex: 'Serviço Urgência', 'Seguro'). Se vazio, null.
-         - "custosRegulados": Tenta encontrar totais de TAR (Acesso Redes), CIEG ou Taxa Exploração.
-         - "mixProducao": Referência a fontes renováveis.
+      REGRAS CRÍTICAS DE EXTRAÇÃO:
+      1. PREÇOS UNITÁRIOS (€/kWh): Procura com precisão até 6 casas decimais (ex: 0.145321). Se encontrares valores arredondados, procura na tabela detalhada.
+      2. DATAS (YYYY-MM-DD): Identifica claramente o início e fim do período de faturação.
+      3. POTÊNCIA: Distingue "Potência Contratada" (kVA) de "Potência Tomada" (kW). Queremos a CONTRATADA.
+      4. VALORES NULOS: Se um campo não estiver explícito na fatura, retorna null. Não alucines valores.
+      5. TOTAIS: O total_fatura deve incluir IVA.
 
-      4. VALORES:
-         - Se um campo não existir, DEVOLVE NULL. Não inventes.
-         - Consumos e Preços por período horário (Ponta/Cheia/Vazio).
+      Extrai para o esquema JSON fornecido.
     `;
 
-    // Using gemini-2.5-flash for speed and lower cost on high volume tasks
+    // Using gemini-2.5-flash for production-grade speed and cost-efficiency
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash', 
       contents: {
@@ -156,7 +143,7 @@ export async function processInvoiceDocument(base64Data: string, mimeType: strin
       config: {
         responseMimeType: "application/json",
         responseSchema: genAiSchema,
-        temperature: 0, 
+        temperature: 0, // Zero temperature for maximum determinism
       }
     });
 
@@ -187,7 +174,7 @@ export async function processInvoiceDocument(base64Data: string, mimeType: strin
             taxaExploracao: rawData.custos_regulados.taxa_exploracao_total || null
         } : null,
         mixProducao: rawData.mixProducao || null,
-        historicoConsumoMensal: null, // OCR generally doesn't get this easily from one page
+        historicoConsumoMensal: null, 
 
         // Technical
         tensao_fornecimento: rawData.tensao || "BTE",
@@ -209,7 +196,7 @@ export async function processInvoiceDocument(base64Data: string, mimeType: strin
         data_inicio: rawData.data_inicio || new Date().toISOString().split('T')[0],
         data_fim: rawData.data_fim || new Date().toISOString().split('T')[0],
         total_fatura_com_iva: rawData.total_fatura || 0,
-        raw_text: "Processado via Gemini 2.5 Flash (SmartBill V2)"
+        raw_text: "Extração Certificada via Gemini 2.5 (Watton Core)"
       };
     }
     return {};
@@ -218,7 +205,7 @@ export async function processInvoiceDocument(base64Data: string, mimeType: strin
     if (error.status === 429 || error.code === 429 || (error.message && error.message.includes('quota'))) {
          return { raw_text: "⚠️ Limite de IA atingido. Por favor insira os dados da fatura manualmente." };
     }
-    return { raw_text: "Falha na leitura automática." }; 
+    return { raw_text: "Falha na leitura automática. Verifique a qualidade da imagem." }; 
   }
 }
 
@@ -230,21 +217,25 @@ export async function generateStrategicInsight(invoice: InvoiceData, simulation:
         }
 
         const prompt = `
-          Atua como CFO Advisor. Análise técnica da fatura de "${invoice.nome_cliente}".
-          Dados:
-          - Custo Anual: ${simulation.currentAnnualCost.toFixed(0)} EUR
-          - Poupança Potencial: ${simulation.savingsTotal.toFixed(0)} EUR (${simulation.savingsPercent.toFixed(1)}%)
-          - Vulnerabilidade: ${simulation.vulnerabilityLabel}
+          Atua como CFO Advisor e Estrategista de Mercado (Watton Energy).
+          Analisa a fatura de "${invoice.nome_cliente}" vs Proposta Watton.
           
-          OUTPUT JSON OBRIGATÓRIO (Português PT):
-          1. executive_summary: Resumo financeiro do risco atual (max 40 palavras).
-          2. hedging_strategy: Recomenda FIXO se vulnerabilidade for ALTA, ou INDEXADO se BAIXA.
-          3. tactical_measures: 3 ações curtas (ex: Ajuste Potência, Load Shifting).
+          DADOS FINANCEIROS:
+          - Custo Atual (Anual): ${simulation.currentAnnualCost.toFixed(0)}€
+          - Poupança Total (Anual): ${simulation.savingsTotal.toFixed(0)}€ (${simulation.savingsPercent.toFixed(1)}%)
+          - Score Vulnerabilidade: ${simulation.vulnerabilityLabel}
+          
+          OBJETIVO:
+          Gera um relatório executivo curto e direto que justifique a mudança para a Watton.
+          
+          OUTPUT JSON (Português PT):
+          1. executive_summary: Resumo financeiro percutante do risco atual vs oportunidade (max 40 palavras).
+          2. hedging_strategy: Recomenda FIXO se vulnerabilidade for ALTA, ou INDEXADO se BAIXA. Explica o porquê com base no perfil de consumo.
+          3. tactical_measures: 3 ações táticas (ex: Ajuste Potência, Load Shifting, Auditoria Fiscal).
         `;
 
-        // Trying with Flash first to avoid 429s on free tier if possible, otherwise fallback
         const response = await ai.models.generateContent({
-          model: 'gemini-3-pro-preview', // Keeping Pro as per instructions for complex tasks
+          model: 'gemini-2.5-flash', // Keeping consistent with Flash for speed unless Pro is explicitly needed for reasoning depth
           contents: prompt,
           config: {
             responseMimeType: "application/json",
@@ -258,7 +249,6 @@ export async function generateStrategicInsight(invoice: InvoiceData, simulation:
         }
         return generateFallbackInsight(invoice, simulation);
     } catch (error: any) {
-        // Quietly handle 429s to prevent user panic
         if (error.status === 429 || error.code === 429 || error.message?.includes('429') || error.message?.includes('quota')) {
             console.warn("⚠️ API Quota limit reached for Strategy Generation. Using heuristic fallback.");
             return generateFallbackInsight(invoice, simulation);
