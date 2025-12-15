@@ -1,0 +1,5 @@
+{
+  "name": "Watton EIP (Energy Intelligent Platform)",
+  "description": "Plataforma avançada de inteligência energética para análise de faturas, simulação de poupança e otimização de margens com integração OMIP e OCR via Gemini.",
+  "requestFramePermissions": []
+}
